@@ -43,17 +43,17 @@ const bfs = async (queue: any, visited: any, res: any, headers: Headers, locales
     const masterLocale = locales.find((locale: any) => locale.fallback_locale === null);
     let responseEnded = false;
 
+    // Get variants for the current node
+    const variantsResponse = await axios.get(
+        `https://${baseUrl}/v3/variant_groups?include_variant_info=true`,
+        { headers }
+    );
+
     try {        
         // Process the first node (parent entry)
         const processNode = async (queueItem: any) => {
             const node = queueItem.ref;
             const currLevel = queueItem.level;
-            
-            // Get variants for the current node
-            const variantsResponse = await axios.get(
-                `https://${baseUrl}/v3/variant_groups?include_variant_info=true`,
-                { headers }
-            );
             
             const variantsData: any = await variantsResponse.data; 
             
