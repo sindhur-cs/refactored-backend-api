@@ -41,6 +41,7 @@ const bfs = async (queue: any, visited: any, res: any, headers: Headers, locales
     let chunked: any[] = [];
 
     const masterLocale = locales.find((locale: any) => locale.fallback_locale === null);
+    let responseEnded = false;
 
     try {        
         // Process the first node (parent entry)
@@ -232,12 +233,17 @@ const bfs = async (queue: any, visited: any, res: any, headers: Headers, locales
         // Send the last chunk
         res.write(JSON.stringify({ items: chunked, _is_last_chunk: true }) + "\n");
         res.end();
+        responseEnded = true;
     }
     catch(error) {
         console.log("Error in BFS traversal: ", error);
-        res.status(500).json({
-            message: "Server error"
-        });
+
+        if (!responseEnded) {
+            responseEnded = true;
+            res.status(500).json({
+                message: "Server error"
+            });
+        }
     }   
 }
 
