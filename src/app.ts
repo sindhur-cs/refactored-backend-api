@@ -27,6 +27,7 @@ app.get("/api/v3/items/bfs/content_types/:type/entries/:uid", async (req: Reques
 
     res.setHeader("Content-Type", "application/json");
     res.setHeader("Transfer-Encoding", "chunked");
+    res.flushHeaders();
 
     const headers = {
         api_key: stackAPI as string,

@@ -237,13 +237,6 @@ const bfs = async (queue: any, visited: any, res: any, headers: Headers, locales
     }
     catch(error) {
         console.log("Error in BFS traversal: ", error);
-
-        if (!responseEnded) {
-            responseEnded = true;
-            res.status(500).json({
-                message: "Server error"
-            });
-        }
     }   
 }
 
