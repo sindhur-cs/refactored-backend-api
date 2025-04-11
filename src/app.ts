@@ -8,7 +8,7 @@ const app = express();
 
 app.use(express.json());
 app.use(cors({
-    origin: ["https://demo-graph.contentstackapps.com", "http://localhost:3000", "demo-graph-refactored.contentstackapps.com"],
+    origin: ["https://demo-graph-refactored.contentstackapps.com"],
     credentials: true
 }));
 
