@@ -57,12 +57,17 @@ const bfs = async (queue: any, visited: any, res: any, headers: Headers, locales
             
             const variantsData: any = await variantsResponse.data; 
             
-            // Filter variant groups based on the node's content type
-            const filteredVariants = variantsData?.variant_groups?.find((variantGroup: any) => 
+            // Filter multiple variant groups based on the node's content type
+            const multipleVariants = variantsData?.variant_groups?.filter((variantGroup: any) => 
                 variantGroup?.content_types?.find((contentType: { uid: String, status: String }) => 
                     contentType.uid === (node._content_type_uid || node.type || node.content_type_uid)
                 )
             );
+
+            // format the variants list
+            const filteredVariants = { variants: multipleVariants?.map((variant: any) => variant.variants).flat() };
+
+            console.log(filteredVariants);
             
             // Get localized variants for the current node
             let localisedVariantsEntries = filteredVariants && await Promise.all(filteredVariants?.variants?.map(async (variant: any) => {
@@ -144,13 +149,15 @@ const bfs = async (queue: any, visited: any, res: any, headers: Headers, locales
             chunked.sort((a, b) => (a.fallback_locale === null ? -1 : b.fallback_locale === null ? 1 : 0));
             
             // Process variants with references
-            const localeVariantSet = new Set();
-            
-            localisedVariantsEntries && localisedVariantsEntries?.forEach((variant: any) => {
-                if(variant._metadata && variant._metadata.references) {
-                    localeVariantSet.add(variant._variant._uid);
-                }
-            });
+            /*
+                const localeVariantSet = new Set();
+                
+                localisedVariantsEntries && localisedVariantsEntries?.forEach((variant: any) => {
+                    if(variant._metadata && variant._metadata.references) {
+                        localeVariantSet.add(variant._variant._uid);
+                    }
+                });
+            */
             
             // Add all variant entries
             localisedVariantsEntries && localisedVariantsEntries?.forEach((variant: any) => {
@@ -165,7 +172,7 @@ const bfs = async (queue: any, visited: any, res: any, headers: Headers, locales
                         references: []
                     };
                     
-                    if(!localeVariantSet.has(variant._variant._uid)) {
+                    if(!(variant._variant._change_set.length > 0)) {
                         data = {...data, fallback_variant: "base_variant"};
                     }
                 }
@@ -237,7 +244,15 @@ const bfs = async (queue: any, visited: any, res: any, headers: Headers, locales
     }
     catch(error) {
         console.log("Error in BFS traversal: ", error);
-    }   
+        if (!responseEnded) {
+            try {
+                res.status(500).write(JSON.stringify({ error: "Error in traversal", _is_last_chunk: true }) + "\n");
+                res.end();
+            } catch (e) {
+                console.log("Failed to write fallback error in BFS:", e);
+            }
+        }
+    }     
 }
 
 export { login, bfs };

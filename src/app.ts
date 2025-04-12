@@ -8,7 +8,7 @@ const app = express();
 
 app.use(express.json());
 app.use(cors({
-    origin: ["https://demo-graph-refactored.contentstackapps.com"],
+    origin: ["http://localhost:3000", "https://demo-graph-refactored.contentstackapps.com"],
     credentials: true
 }));
 
@@ -47,21 +47,26 @@ app.get("/api/v3/items/bfs/content_types/:type/entries/:uid", async (req: Reques
         const localesResponse = await axios.get(`https://${baseUrl}/v3/locales`, { headers });
         let locales: any = await localesResponse.data;
         
-        // Sort locales to put master locale (fallback_locale === null) first
-        const masterLocale = locales.locales.find((locale: any) => locale.fallback_locale === null);
-        locales.locales = locales.locales.filter((locale: any) => locale.fallback_locale !== null);
-        locales.locales.unshift(masterLocale);
-        
         queue.push({ ref: parent, level: 0 });
         visited.add(parent.uid);
 
         await bfs(queue, visited, res, headers, locales.locales);
     }
-    catch(error) {
-        console.log(error);
-        res.status(500).json({
-            message: "Server error"
-        });
+    catch (error) {
+        console.log("Error in route handler:", error);
+    
+        if (!res.headersSent) {
+            return res.status(500).json({
+                message: "Server error"
+            });
+        } else {
+            try {
+                res.status(500).write(JSON.stringify({ error: "Server error during streaming", _is_last_chunk: true }) + "\n");
+                res.end();
+            } catch (e) {
+                console.error("Failed to write error to response stream:", e);
+            }
+        }
     }
 });
 
